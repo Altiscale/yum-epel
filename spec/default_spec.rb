@@ -2,7 +2,16 @@ require 'spec_helper'
 
 describe 'yum-epel::default' do
   context 'yum-epel::default uses default attributes' do
-    let(:chef_run) { ChefSpec::Runner.new(:step_into => ['yum_repository']).converge(described_recipe) }
+    let(:chef_run) do
+      ChefSpec::Runner.new do |node|
+        node.set['yum']['epel']['managed'] = true
+        node.set['yum']['epel-debuginfo']['managed'] = true
+        node.set['yum']['epel-source']['managed'] = true
+        node.set['yum']['epel-testing']['managed'] = true
+        node.set['yum']['epel-testing-debuginfo']['managed'] = true
+        node.set['yum']['epel-testing-source']['managed'] = true
+      end.converge(described_recipe)
+    end
 
     %w{
       epel
@@ -14,10 +23,6 @@ describe 'yum-epel::default' do
       }.each do |repo|
       it "creates yum_repository[#{repo}]" do
         expect(chef_run).to create_yum_repository(repo)
-      end
-
-      it "steps into yum_repository and creates template[/etc/yum.repos.d/#{repo}.repo]" do
-        expect(chef_run).to render_file("/etc/yum.repos.d/#{repo}.repo")
       end
     end
 
